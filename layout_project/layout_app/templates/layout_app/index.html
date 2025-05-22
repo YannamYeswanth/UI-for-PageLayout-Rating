@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Page Layout Designer</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .canvas { width: 500px; height: 700px; border: 1px solid #ccc; position: relative; background: #fff; margin-top: 20px; }
+    .item { position: absolute; border: 1px solid #333; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+    .text { background-color: #cce5ff; }
+    .image { background-color: #d4edda; }
+    .button { background-color: #fff3cd; }
+  </style>
+</head>
+<body>
+  <h1>Page Layout Designer</h1>
+
+  <form id="itemForm">
+    <input type="number" placeholder="x" name="x" required>
+    <input type="number" placeholder="y" name="y" required>
+    <input type="number" placeholder="width" name="w" required>
+    <input type="number" placeholder="height" name="h" required>
+    <select name="type">
+      <option value="text">Text</option>
+      <option value="image">Image</option>
+      <option value="button">Button</option>
+    </select>
+    <button type="submit">Add Item</button>
+  </form>
+
+  <div class="canvas" id="canvas"></div>
+
+  <script>
+    const form = document.getElementById('itemForm');
+    const canvas = document.getElementById('canvas');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const data = new FormData(form);
+      const x = data.get('x'), y = data.get('y'), w = data.get('w'), h = data.get('h'), type = data.get('type');
+
+      const div = document.createElement('div');
+      div.className = `item ${type}`;
+      div.style.left = x + 'px';
+      div.style.top = y + 'px';
+      div.style.width = w + 'px';
+      div.style.height = h + 'px';
+      div.textContent = type.toUpperCase();
+
+      canvas.appendChild(div);
+      form.reset();
+    });
+  </script>
+</body>
+</html>
