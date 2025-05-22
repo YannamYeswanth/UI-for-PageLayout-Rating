@@ -1,55 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Page Layout Designer</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .canvas { width: 500px; height: 700px; border: 1px solid #ccc; position: relative; background: #fff; margin-top: 20px; }
-    .item { position: absolute; border: 1px solid #333; font-size: 12px; display: flex; align-items: center; justify-content: center; }
-    .text { background-color: #cce5ff; }
-    .image { background-color: #d4edda; }
-    .button { background-color: #fff3cd; }
-  </style>
+    <title>Page Layout Generator</title>
 </head>
 <body>
-  <h1>Page Layout Designer</h1>
+    <h2>Upload JSON Layout File</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="json_file" accept=".json" required />
+        <button type="submit">Generate Layout</button>
+    </form>
 
-  <form id="itemForm">
-    <input type="number" placeholder="x" name="x" required>
-    <input type="number" placeholder="y" name="y" required>
-    <input type="number" placeholder="width" name="w" required>
-    <input type="number" placeholder="height" name="h" required>
-    <select name="type">
-      <option value="text">Text</option>
-      <option value="image">Image</option>
-      <option value="button">Button</option>
-    </select>
-    <button type="submit">Add Item</button>
+   {% if image_url %}
+  <h3>Generated Layout</h3>
+  <img src="{{ image_url }}" alt="Layout" style="max-width:100%; border:1px solid #ccc;">
+
+  <form method="POST" action="{% url 'submit_rating' %}">
+    {% csrf_token %}
+    <label for="rating">Rate this layout (1–5):</label>
+    <input type="number" name="rating" min="1" max="5" required>
+
+    <!-- Pass page number from JSON -->
+    <input type="hidden" name="page_number" value="{{ page_number }}">
+    
+    <br><br>
+    <button type="submit">Submit Rating</button>
   </form>
+{% endif %}
 
-  <div class="canvas" id="canvas"></div>
 
-  <script>
-    const form = document.getElementById('itemForm');
-    const canvas = document.getElementById('canvas');
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const data = new FormData(form);
-      const x = data.get('x'), y = data.get('y'), w = data.get('w'), h = data.get('h'), type = data.get('type');
-
-      const div = document.createElement('div');
-      div.className = `item ${type}`;
-      div.style.left = x + 'px';
-      div.style.top = y + 'px';
-      div.style.width = w + 'px';
-      div.style.height = h + 'px';
-      div.textContent = type.toUpperCase();
-
-      canvas.appendChild(div);
-      form.reset();
-    });
-  </script>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
 </body>
 </html>
