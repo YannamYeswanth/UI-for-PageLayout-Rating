@@ -1,36 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Page Layout Generator</title>
+  <meta charset="UTF-8">
+  <title>Multi-Page Layout Rating</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .upload-form {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .upload-form input[type="file"] {
+      padding: 10px;
+    }
+
+    .page-section {
+      margin: 40px auto;
+      max-width: 1000px;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .page-section img {
+      width: 100%;
+      border: 1px solid #ccc;
+      background: white;
+    }
+
+    .star-rating {
+      direction: rtl;
+      display: inline-flex;
+      margin-top: 10px;
+    }
+
+    .star-rating input[type="radio"] {
+      display: none;
+    }
+
+    .star-rating label {
+      font-size: 2rem;
+      color: #ccc;
+      cursor: pointer;
+    }
+
+    .star-rating input[type="radio"]:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label {
+      color: gold;
+    }
+
+    .rating-form {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .submit-button {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body>
-    <h2>Upload JSON Layout File</h2>
+
+  <h1>Upload Layout JSON and Rate Each Page</h1>
+
+  <div class="upload-form">
     <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="file" name="json_file" accept=".json" required />
-        <button type="submit">Generate Layout</button>
+      {% csrf_token %}
+      <input type="file" name="json_file" accept=".json" required />
+      <br><br>
+      <button type="submit">Generate Layouts</button>
     </form>
+  </div>
 
-   {% if image_url %}
-  <h3>Generated Layout</h3>
-  <img src="{{ image_url }}" alt="Layout" style="max-width:100%; border:1px solid #ccc;">
+  {% if rendered_pages %}
+    <form method="POST">
+      {% csrf_token %}
+      {% for page in rendered_pages %}
+        <div class="page-section">
+          <h2>Document: {{ page.document_id }} — Page {{ page.page_number }} ({{ page.layout_name }})</h2>
+          <img src="{{ page.image_url }}" alt="Layout Image for Page {{ page.page_number }}">
+          <div class="rating-form">
+            <label>Rate this layout:</label>
+            <div class="star-rating">
+              {% for i in "54321" %}
+                <input type="radio" id="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}" 
+                       name="rating_{{ page.page_number }}_{{ page.layout_name }}" 
+                       value="{{ i }}" required />
+                <label for="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}">★</label>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
 
-  <form method="POST" action="{% url 'submit_rating' %}">
-    {% csrf_token %}
-    <label for="rating">Rate this layout (1–5):</label>
-    <input type="number" name="rating" min="1" max="5" required>
+      <div class="submit-button">
+        <button type="submit" name="rate_image">Submit Ratings</button>
+      </div>
+    </form>
+  {% endif %}
 
-    <!-- Pass page number from JSON -->
-    <input type="hidden" name="page_number" value="{{ page_number }}">
-    
-    <br><br>
-    <button type="submit">Submit Rating</button>
-  </form>
-{% endif %}
-
-
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
 </body>
 </html>
