@@ -1,22 +1,42 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Layout Rating Tool</title>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f9f9f9; }
-    h1 { text-align: center; }
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      text-align: center;
+    }
 
     .upload-form {
       text-align: center;
       margin-bottom: 30px;
     }
 
+    .grid-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
     .page-section {
       background: #fff;
-      padding: 20px;
-      margin: 30px auto;
-      max-width: 1000px;
+      padding: 15px;
+      width: 300px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
@@ -35,7 +55,7 @@
     }
 
     .star-rating label {
-      font-size: 2rem;
+      font-size: 1.5rem;
       color: #ccc;
       cursor: pointer;
     }
@@ -48,12 +68,12 @@
 
     .rating-form {
       text-align: center;
-      margin-top: 15px;
+      margin-top: 10px;
     }
 
     .submit-button {
       text-align: center;
-      margin-top: 40px;
+      margin-top: 30px;
     }
 
     button {
@@ -68,6 +88,22 @@
 
     button:hover {
       background-color: #45a049;
+    }
+
+    .pagination {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .pagination span, .pagination a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #4CAF50;
+      font-weight: bold;
+    }
+
+    .pagination .current {
+      color: black;
     }
   </style>
 </head>
@@ -84,31 +120,51 @@
     </form>
   </div>
 
-  {% if rendered_pages %}
+  {% if page_obj %}
     <form method="POST">
       {% csrf_token %}
-      {% for page in rendered_pages %}
-        <div class="page-section">
-          <h2>Document: {{ page.document_id }} | Page {{ page.page_number }} — {{ page.layout_name }}</h2>
-          <img src="{{ page.image_url }}" alt="Page Layout Image">
-          <div class="rating-form">
-            <label>Rate this layout:</label>
-            <div class="star-rating">
-              {% for i in "54321" %}
-                <input type="radio" id="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}" 
-                       name="rating_{{ page.page_number }}_{{ page.layout_name }}" 
-                       value="{{ i }}" required />
-                <label for="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}">★</label>
-              {% endfor %}
+      <div class="grid-container">
+        {% for row in rows %}
+        <div class="row">
+          {% for page in row %}
+          <div class="page-section">
+            <h3>Doc: {{ page.document_id }}<br>Pg {{ page.page_number }} — {{ page.layout_name }}</h3>
+            <img src="{{ page.image_url }}" alt="Page Layout Image">
+            <div class="rating-form">
+              <label>Rate:</label>
+              <div class="star-rating">
+                {% for i in "54321" %}
+                  <input type="radio" id="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}" 
+                         name="rating_{{ page.page_number }}_{{ page.layout_name }}" 
+                         value="{{ i }}" required />
+                  <label for="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}">★</label>
+                {% endfor %}
+              </div>
             </div>
           </div>
+          {% endfor %}
         </div>
-      {% endfor %}
+        {% endfor %}
+      </div>
 
       <div class="submit-button">
         <button type="submit" name="rate_image">Submit All Ratings</button>
       </div>
     </form>
+
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page=1">« First</a>
+        <a href="?page={{ page_obj.previous_page_number }}">‹ Prev</a>
+      {% endif %}
+
+      <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">Last »</a>
+      {% endif %}
+    </div>
   {% endif %}
 
 </body>

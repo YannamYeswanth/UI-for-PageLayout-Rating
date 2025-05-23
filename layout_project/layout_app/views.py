@@ -1,3 +1,4 @@
+# views.py
 import os
 import uuid
 import csv
@@ -5,33 +6,21 @@ import json
 from PIL import Image, ImageDraw
 from django.shortcuts import render, redirect
 from django.conf import settings
+from django.core.paginator import Paginator
 
-
-from PIL import Image, ImageDraw
 
 def draw_layout_image(items, width, height, color_map):
-    base_image = Image.new('RGBA', (width, height), (255, 255, 255, 255))  # white background
+    image = Image.new('RGB', (width, height), 'white')
+    draw = ImageDraw.Draw(image)
 
     for item in items:
-        overlay = Image.new('RGBA', (width, height), (255, 255, 255, 0))  # fully transparent
-        draw = ImageDraw.Draw(overlay)
-
         x, y = item['x'], item['y']
         w, h = item['width'], item['height']
         category = item.get('category', 'unknown')
+        color = color_map.get(category, color_map.get('default', 'gray'))
+        draw.rectangle([x, y, x + w, y + h], fill=color, outline='black')
 
-        # Get fill color with alpha (semi-transparent)
-        hex_color = color_map.get(category, '#888888')  # fallback to gray
-        rgb = tuple(int(hex_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-        rgba = rgb + (150,)  # transparency: 80/255
-
-        draw.rectangle([x, y, x + w, y + h], fill=rgba, outline=(0, 0, 0, 100))  # semi-transparent
-
-        # Blend overlay onto base image
-        base_image = Image.alpha_composite(base_image, overlay)
-
-    return base_image.convert('RGB')  # return as RGB for saving as PNG
-
+    return image
 
 
 def write_rating_row(document_id, page_number, layout_name, rating):
@@ -47,7 +36,6 @@ def write_rating_row(document_id, page_number, layout_name, rating):
 
 def index(request):
     if request.method == 'POST':
-        # ⭐ Handle rating submission
         if 'rate_image' in request.POST:
             json_data = request.session.get('json_data', [])
 
@@ -61,13 +49,12 @@ def index(request):
                             document_id = page["document_id"]
                             break
                     else:
-                        continue  # skip if no match
+                        continue
 
                     write_rating_row(document_id, page_number, layout_name, rating)
 
             return redirect('index')
 
-        # 📦 Handle uploaded JSON
         elif 'json_file' in request.FILES:
             json_file = request.FILES['json_file']
             pages_data = json.load(json_file)
@@ -80,7 +67,7 @@ def index(request):
             }
 
             rendered_pages = []
-            layout_keys = ['items', 'predicted_items_0', 'predicted_items_1', 'predicted_items_2','predicted_items_3']
+            layout_keys = ['items', 'predicted_items_0', 'predicted_items_1', 'predicted_items_2', 'predicted_items_3']
 
             for page in pages_data:
                 width = page['width']
@@ -106,8 +93,17 @@ def index(request):
                         'document_id': document_id
                     })
 
-            return render(request, 'layout_app/index.html', {
-                'rendered_pages': rendered_pages
-            })
+            request.session['rendered_pages'] = rendered_pages
 
-    return render(request, 'layout_app/index.html')
+    rendered_pages = request.session.get('rendered_pages', [])
+    paginator = Paginator(rendered_pages, 6)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    # Group by 3s for rows in the template (handled in view to avoid needing 'batch' filter)
+    rows = [rendered_pages[i:i+3] for i in range((page_obj.number - 1) * 6, min(page_obj.number * 6, len(rendered_pages)), 3)]
+
+    return render(request, 'layout_app/index.html', {
+        'page_obj': page_obj,
+        'rows': rows
+    })
