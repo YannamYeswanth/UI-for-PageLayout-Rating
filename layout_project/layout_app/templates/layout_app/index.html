@@ -1,8 +1,8 @@
-<!-- index.html -->
+<!-- layout_app/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Layout Rating Tool</title>
   <style>
     body {
@@ -38,16 +38,19 @@
       padding: 15px;
       width: 300px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
     }
 
     .page-section img {
       width: 100%;
       border: 1px solid #ccc;
+      border-radius: 4px;
     }
 
     .star-rating {
       direction: rtl;
       display: inline-flex;
+      margin-top: 8px;
     }
 
     .star-rating input[type="radio"] {
@@ -58,17 +61,13 @@
       font-size: 1.5rem;
       color: #ccc;
       cursor: pointer;
+      user-select: none;
     }
 
     .star-rating input:checked ~ label,
     .star-rating label:hover,
     .star-rating label:hover ~ label {
       color: gold;
-    }
-
-    .rating-form {
-      text-align: center;
-      margin-top: 10px;
     }
 
     .submit-button {
@@ -115,8 +114,8 @@
     <form method="POST" enctype="multipart/form-data">
       {% csrf_token %}
       <input type="file" name="json_file" accept=".json" required />
-      <br><br>
-      <button type="submit">Upload & Generate Layouts</button>
+      <br /><br />
+      <button type="submit" name="upload_json">Upload & Generate Layouts</button>
     </form>
   </div>
 
@@ -125,25 +124,26 @@
       {% csrf_token %}
       <div class="grid-container">
         {% for row in rows %}
-        <div class="row">
-          {% for page in row %}
-          <div class="page-section">
-            <h3>Doc: {{ page.document_id }}<br>Pg {{ page.page_number }} — {{ page.layout_name }}</h3>
-            <img src="{{ page.image_url }}" alt="Page Layout Image">
-            <div class="rating-form">
-              <label>Rate:</label>
-              <div class="star-rating">
-                {% for i in "54321" %}
-                  <input type="radio" id="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}" 
-                         name="rating_{{ page.page_number }}_{{ page.layout_name }}" 
-                         value="{{ i }}" required />
-                  <label for="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}">★</label>
-                {% endfor %}
+          <div class="row">
+            {% for page in row %}
+              <div class="page-section">
+                <h3>Doc: {{ page.document_id }}<br />Pg {{ page.page_number }} — {{ page.layout_name }}</h3>
+                <img src="{{ page.image_url }}" alt="Page Layout Image" />
+                <div class="rating-form">
+                  <label>Rate:</label>
+                  <div class="star-rating">
+                    {% for i in "54321" %}
+                      <input type="radio" 
+                             id="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}" 
+                             name="rating_{{ page.page_number }}_{{ page.layout_name }}" 
+                             value="{{ i }}" required />
+                      <label for="star{{ i }}_{{ page.page_number }}_{{ page.layout_name }}">★</label>
+                    {% endfor %}
+                  </div>
+                </div>
               </div>
-            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
-        </div>
         {% endfor %}
       </div>
 
