@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: Arial;
-      padding: 20px;
+      margin: 0;
       background: #f9f9f9;
     }
 
@@ -17,6 +17,11 @@
     .upload-form {
       text-align: center;
       margin-bottom: 30px;
+    }
+
+    .layout-selector {
+      text-align: center;
+      margin-bottom: 20px;
     }
 
     .grid-container {
@@ -30,23 +35,28 @@
       display: flex;
       justify-content: center;
       gap: 30px;
+      flex-wrap: wrap;
+      width: 100%;
     }
 
-    /* Increased width for bigger layouts */
+    .row:last-child {
+      justify-content: center;
+    }
+
     .page-section {
+      flex: 1 1 0;
+      max-width: 460px;
       background: #fff;
       padding: 15px;
-      width: 460px; /* increased from 300 */
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       border-radius: 8px;
+      box-sizing: border-box;
     }
 
-    /* Image uses full width of container */
     .page-section img {
       width: 100%;
       border: 1px solid #ccc;
       border-radius: 4px;
-      height: auto;
       object-fit: contain;
     }
 
@@ -61,7 +71,7 @@
     }
 
     .star-rating label {
-      font-size: 2rem; /* bigger stars */
+      font-size: 2rem;
       color: #ccc;
       cursor: pointer;
       user-select: none;
@@ -108,7 +118,25 @@
     .pagination .current {
       color: black;
     }
+
+    .feedback-select {
+      margin-top: 10px;
+    }
+
+    .feedback-select select {
+      font-size: 1rem;
+      padding: 5px;
+    }
   </style>
+
+  <script>
+    function changeLayoutsPerPage(select) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('layouts_per_page', select.value);
+      url.searchParams.set('page', 1);
+      window.location.href = url.toString();
+    }
+  </script>
 </head>
 <body>
 
@@ -124,8 +152,18 @@
 </div>
 
 {% if show_layouts %}
+  <div class="layout-selector">
+    <label for="layouts_per_page">Layouts per Page:</label>
+    <select id="layouts_per_page" onchange="changeLayoutsPerPage(this)">
+      {% for i in range_1_16 %}
+        <option value="{{ i }}" {% if layouts_per_page == i %}selected{% endif %}>{{ i }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
   <form method="POST">
     {% csrf_token %}
+    <input type="hidden" name="layouts_per_page" value="{{ layouts_per_page }}">
     <div class="grid-container">
       {% for row in rows %}
         <div class="row">
@@ -145,6 +183,14 @@
                   {% endfor %}
                 </div>
               </div>
+              <div class="feedback-select">
+                <label for="feedback_{{ page.page_number }}_{{ page.layout_name }}">Feedback:</label>
+                <select name="feedback_{{ page.page_number }}_{{ page.layout_name }}" required>
+                  <option value="">-- Select --</option>
+                  <option value="Good">Good</option>
+                  <option value="Bad">Bad</option>
+                </select>
+              </div>
             </div>
           {% endfor %}
         </div>
@@ -158,15 +204,15 @@
 
   <div class="pagination">
     {% if page_obj.has_previous %}
-      <a href="?page=1">« First</a>
-      <a href="?page={{ page_obj.previous_page_number }}">‹ Prev</a>
+      <a href="?page=1&layouts_per_page={{ layouts_per_page }}">« First</a>
+      <a href="?page={{ page_obj.previous_page_number }}&layouts_per_page={{ layouts_per_page }}">‹ Prev</a>
     {% endif %}
 
     <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
 
     {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}">Next ›</a>
-      <a href="?page={{ page_obj.paginator.num_pages }}">Last »</a>
+      <a href="?page={{ page_obj.next_page_number }}&layouts_per_page={{ layouts_per_page }}">Next ›</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}&layouts_per_page={{ layouts_per_page }}">Last »</a>
     {% endif %}
   </div>
 {% endif %}
