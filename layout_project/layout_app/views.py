@@ -7,18 +7,31 @@ from django.shortcuts import render, redirect
 from django.conf import settings
 
 
+from PIL import Image, ImageDraw
+
 def draw_layout_image(items, width, height, color_map):
-    image = Image.new('RGB', (width, height), 'white')
-    draw = ImageDraw.Draw(image)
+    base_image = Image.new('RGBA', (width, height), (255, 255, 255, 255))  # white background
 
     for item in items:
+        overlay = Image.new('RGBA', (width, height), (255, 255, 255, 0))  # fully transparent
+        draw = ImageDraw.Draw(overlay)
+
         x, y = item['x'], item['y']
         w, h = item['width'], item['height']
         category = item.get('category', 'unknown')
-        color = color_map.get(category, color_map.get('default', 'gray'))
-        draw.rectangle([x, y, x + w, y + h], fill=color, outline='black')
 
-    return image
+        # Get fill color with alpha (semi-transparent)
+        hex_color = color_map.get(category, '#888888')  # fallback to gray
+        rgb = tuple(int(hex_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+        rgba = rgb + (150,)  # transparency: 80/255
+
+        draw.rectangle([x, y, x + w, y + h], fill=rgba, outline=(0, 0, 0, 100))  # semi-transparent
+
+        # Blend overlay onto base image
+        base_image = Image.alpha_composite(base_image, overlay)
+
+    return base_image.convert('RGB')  # return as RGB for saving as PNG
+
 
 
 def write_rating_row(document_id, page_number, layout_name, rating):
