@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Layout Augmentation</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background-color: #f7f7f7;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+    }
+    label, select, input {
+      display: block;
+      margin: 15px auto;
+      width: 80%;
+    }
+    button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto 0;
+    }
+    button:hover {
+      background: #1976D2;
+    }
+  </style>
+</head>
+<body>
+  <h2>Generate Design-Aware Layout Variants</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label>Select Layout JSON File:</label>
+    <input type="file" name="json_file" accept=".json" required>
+
+    <label>Number of Variants:</label>
+    <input type="number" name="num_variants" min="1" max="20" value="5">
+
+    <label>Variation Strength:</label>
+    <select name="strength">
+      <option value="low">Low (subtle)</option>
+      <option value="medium" selected>Medium (balanced)</option>
+      <option value="high">High (bold)</option>
+    </select>
+
+    <button type="submit">Generate Layouts</button>
+  </form>
+</body>
+</html>

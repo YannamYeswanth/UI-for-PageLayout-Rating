@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generated Layout Variants</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .preview {
+      background: white;
+      padding: 10px;
+      border: 1px solid #ccc;
+      max-width: 400px;
+      text-align: center;
+    }
+    .preview img {
+      width: 100%;
+      height: auto;
+    }
+    textarea {
+      width: 100%;
+      height: 300px;
+      margin-top: 30px;
+      font-family: monospace;
+      padding: 10px;
+    }
+    .download-btn {
+      margin-top: 20px;
+      text-align: center;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #388E3C;
+    }
+  </style>
+</head>
+<body>
+  <h2>Generated Layout Variants</h2>
+
+  <div class="preview-container">
+    {% for path in image_paths %}
+      <div class="preview">
+        <img src="{{ path }}" alt="Augmented Layout Preview">
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="download-btn">
+    <button onclick="downloadJSON()">Download All Layouts as JSON</button>
+  </div>
+
+  <textarea id="jsonData">{{ augmented_json }}</textarea>
+
+  <script>
+    function downloadJSON() {
+      const data = document.getElementById('jsonData').value;
+      const blob = new Blob([data], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'augmented_layouts.json';
+      link.click();
+    }
+  </script>
+</body>
+</html>

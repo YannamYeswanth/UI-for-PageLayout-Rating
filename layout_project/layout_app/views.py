@@ -136,3 +136,121 @@ def index(request):
         'layouts_per_page': layouts_per_page,
         'range_1_16': range(1, 16),
     })
+
+
+
+import random
+
+
+import os
+import json
+import uuid
+import random
+# from PIL import Image, ImageDraw
+# from django.conf import settings
+# from django.shortcuts import render
+# from django.http import HttpResponse
+
+
+def apply_design_constraints(items, page_width, page_height, strength='medium', grid_size=10):
+    new_items = []
+    margin = 30
+    shift_range = {
+        'low': 10,
+        'medium':  40,
+        'high': 80
+    }.get(strength, 40)
+
+    size_variation = {
+        'low': 0.05,
+        'medium': 0.15,
+        'high': 0.3
+    }.get(strength, 0.15)
+
+    for item in items:
+        new_item = item.copy()
+
+        # Position variation
+        shift_x = random.randint(-shift_range, shift_range)
+        shift_y = random.randint(-shift_range, shift_range)
+        new_x = max(margin, min(page_width - new_item['width'] - margin, new_item['x'] + shift_x))
+        new_y = max(margin, min(page_height - new_item['height'] - margin, new_item['y'] + shift_y))
+
+        # Snap to grid
+        new_item['x'] = round(new_x / grid_size) * grid_size
+        new_item['y'] = round(new_y / grid_size) * grid_size
+
+        # Size variation (preserve aspect ratio)
+        if random.random() < 0.5:
+            w_factor = 1 + random.uniform(-size_variation, size_variation)
+            h_factor = w_factor if random.random() < 0.7 else 1 + random.uniform(-size_variation, size_variation)
+            new_width = max(20, min(page_width - new_item['x'] - margin, int(new_item['width'] * w_factor)))
+            new_height = max(20, min(page_height - new_item['y'] - margin, int(new_item['height'] * h_factor)))
+            new_item['width'] = round(new_width / grid_size) * grid_size
+            new_item['height'] = round(new_height / grid_size) * grid_size
+
+        new_items.append(new_item)
+
+    return new_items
+
+
+def draw_layout_image(items, width, height):
+    color_map = {
+        'textFrame': '#FFD54F',
+        'graphics': '#4FC3F7',
+        'default': '#E0E0E0'
+    }
+
+    image = Image.new('RGB', (width, height), 'white')
+    draw = ImageDraw.Draw(image)
+
+    for item in items:
+        x, y = item['x'], item['y']
+        w, h = item['width'], item['height']
+        category = item.get('category', 'default')
+        color = color_map.get(category, color_map['default'])
+        draw.rectangle([x, y, x + w, y + h], fill=color, outline='black')
+
+    return image
+
+
+def augment_layout(request):
+    if request.method == 'POST' and request.FILES.get('json_file'):
+        json_file = request.FILES['json_file']
+        base_layout = json.load(json_file)
+
+        num_variants = int(request.POST.get('num_variants', 5))
+        strength = request.POST.get('strength', 'medium')
+
+        augmented_data = []
+        preview_images = []
+
+        for i in range(num_variants):
+            new_items = apply_design_constraints(
+                base_layout['items'],
+                base_layout['width'],
+                base_layout['height'],
+                strength
+            )
+            new_layout = {
+                'document_id': base_layout['document_id'],
+                'page_number': base_layout['page_number'],
+                'width': base_layout['width'],
+                'height': base_layout['height'],
+                'items': new_items
+            }
+            augmented_data.append(new_layout)
+
+            # Draw preview image
+            img = draw_layout_image(new_items, base_layout['width'], base_layout['height'])
+            filename = f"aug_{uuid.uuid4().hex}.png"
+            path = os.path.join(settings.MEDIA_ROOT, filename)
+            img.save(path)
+            preview_images.append(settings.MEDIA_URL + filename)
+
+        return render(request, 'layout_app/augment_result.html', {
+            'augmented_json': json.dumps(augmented_data, indent=2),
+            'image_paths': preview_images
+        })
+
+    return render(request, 'layout_app/augment_layout.html')
